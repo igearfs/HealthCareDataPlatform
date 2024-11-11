@@ -1,5 +1,4 @@
-# NLM API Integration
-
+# Healthcare Data Platform
 Sponsored by: In-Game Event, A Red Flag Syndicate LLC.
 
 
