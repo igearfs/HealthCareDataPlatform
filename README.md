@@ -1,4 +1,4 @@
-Here’s the full revised version for you to copy and paste:
+Here’s the updated version of your **Healthcare Data Platform** document with Tuleap and OpenProject added to the list of technologies:
 
 ---
 
@@ -86,10 +86,16 @@ We aim to identify harmful chemicals in food and their impact on long-term healt
 - **Observability:** Grafana/Prometheus for metrics and logs
 - **Frameworks:** Spring (JPA, Ribbon, Eureka, etc.) for provider and patient portals
 - **Patient Matching:** OpenEMPI
-- **ETL Pipelines:** Mirth Connect for seamless data integration
-- **Analytics:** Druid for advanced analytics support
+- **ETL Pipelines:** Mirth Connect for seamless data integration, maybe Airflow if needed
+- **KAFKA:** Kafka, Kafka, Kafka... hehe... for events and plug and play components. 
+- **Analytics:** Druid for advanced analytics support maybe a search mechanism
+- **GraphQL:** Patient Searching.. FHIR usage.
 - **AI & Reporting:** Python for reports and AI-driven insights
-
+- **Project Management and Ticketing:**
+  - Tuleap for low-level task management and ticketing
+  - OpenProject for higher-level project management and reporting
+- **Spring-Boot
+- ** MORE TO COME as we explore...
 ---
 
 ### **And More to Come!**
