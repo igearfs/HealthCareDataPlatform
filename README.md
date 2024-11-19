@@ -1,6 +1,16 @@
-Here’s the updated version of your **Healthcare Data Platform** document with Tuleap and OpenProject added to the list of technologies:
+# **WARNING: EXPERIMENTAL SETUP - USE AT YOUR OWN RISK**
 
----
+This setup is **experimental** and provided for testing and learning purposes only. If you choose to use or adapt any part of this configuration, you are doing so **at your own risk**.
+
+- The **PostgreSQL + Citus** cluster setup and related services (such as **Prometheus**, **Grafana**, **pgAdmin**, etc.) are **not production-ready** and may not work as expected.
+- If you encounter issues, **you are responsible for troubleshooting and resolving them**.
+- By proceeding, you acknowledge that **any mistakes made, data loss, or downtime** resulting from using this configuration are **your own responsibility**.
+- This setup is provided **without guarantees** and is **unsupported**.
+- **This setup is not compliant with HIPAA** or any other data protection or privacy regulations. **Do not use this setup for any regulated data** (e.g., healthcare, financial, or personally identifiable information).
+
+**You have been warned. Use at your own risk.**
+
+
 
 # Healthcare Data Platform
 Sponsored by: In-Game Event, A Red Flag Syndicate LLC
