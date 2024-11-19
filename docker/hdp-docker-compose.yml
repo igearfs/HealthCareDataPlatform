@@ -1,3 +1,5 @@
+version: '3.7'
+
 services:
   # PostgreSQL Master Node with Citus
   dhp-postgres-master:
@@ -9,7 +11,15 @@ services:
     networks:
       - dhp-network
     expose:
-      - "5432"  # Expose to internal services (like Prometheus)
+      - "5432"
+    volumes:
+      - dhp-postgres-master-data:/var/lib/postgresql/data  # Persistent storage for master
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "dhp-postgres", "-d", "postgres"]
+      interval: 30s
+      retries: 3
+      start_period: 10s
+      timeout: 10s
 
   # PostgreSQL Worker Node 1 with Citus
   dhp-postgres-node1:
@@ -24,6 +34,14 @@ services:
       - "5432"
     depends_on:
       - dhp-postgres-master
+    volumes:
+      - dhp-postgres-node1-data:/var/lib/postgresql/data  # Persistent storage for node 1
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "dhp-postgres", "-d", "postgres"]
+      interval: 30s
+      retries: 3
+      start_period: 10s
+      timeout: 10s
 
   # PostgreSQL Worker Node 2 with Citus
   dhp-postgres-node2:
@@ -38,17 +56,26 @@ services:
       - "5432"
     depends_on:
       - dhp-postgres-master
+    volumes:
+      - dhp-postgres-node2-data:/var/lib/postgresql/data  # Persistent storage for node 2
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "dhp-postgres", "-d", "postgres"]
+      interval: 30s
+      retries: 3
+      start_period: 10s
+      timeout: 10s
 
   # Prometheus for monitoring PostgreSQL
   dhp-prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v3.0.0
     container_name: dhp-prometheus
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml  # Mount Prometheus config file
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - dhp-prometheus-data:/prometheus  # Persistent storage for Prometheus
     networks:
       - dhp-network
     ports:
-      - "9090:9090"  # Expose Prometheus UI on port 9090
+      - "9090:9090"
     depends_on:
       - dhp-postgres-master
       - dhp-postgres-node1
@@ -57,30 +84,34 @@ services:
 
   # Grafana for visualizing metrics from Prometheus
   dhp-grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:11.1.9
     container_name: dhp-grafana
     environment:
-      GF_SECURITY_ADMIN_PASSWORD: admin  # Set Grafana admin password
+      GF_SECURITY_ADMIN_PASSWORD: admin
     networks:
       - dhp-network
     ports:
-      - "3000:3000"  # Expose Grafana UI on port 3000
+      - "3000:3000"
     depends_on:
       - dhp-prometheus
+    volumes:
+      - dhp-grafana-data:/var/lib/grafana  # Persistent storage for Grafana
 
   # pgAdmin for PostgreSQL web management UI
   dhp-pgadmin:
-    image: dpage/pgadmin4:latest
+    image: dpage/pgadmin4:8.13.0
     container_name: dhp-pgadmin
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@example.com  # Set pgAdmin default email
-      PGADMIN_DEFAULT_PASSWORD: admin  # Set pgAdmin default password
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
     networks:
       - dhp-network
     ports:
-      - "5050:80"  # Expose pgAdmin UI on port 5050
+      - "5050:80"
     depends_on:
       - dhp-postgres-master
+    volumes:
+      - dhp-pgadmin-data:/var/lib/pgadmin  # Persistent storage for pgAdmin
 
   # PostgreSQL Exporter for Prometheus (to scrape metrics)
   dhp-postgres-exporter:
@@ -91,9 +122,235 @@ services:
     networks:
       - dhp-network
     expose:
-      - "9187"  # Expose metrics endpoint for Prometheus
+      - "9187"
+
+  # Redis Instances
+  dhp-redis-1:
+    image: redis:latest
+    container_name: dhp-redis-1
+    ports:
+      - "6379:6379"
+    volumes:
+      - dhp-redis-data-1:/data
+    command: "redis-server"
+    networks:
+      - dhp-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      retries: 3
+      start_period: 10s
+      timeout: 10s
+
+  dhp-redis-2:
+    image: redis:latest
+    container_name: dhp-redis-2
+    ports:
+      - "6380:6379"
+    volumes:
+      - dhp-redis-data-2:/data
+    command: "redis-server --port 6380 --replicaof dhp-redis-1 6379"
+    networks:
+      - dhp-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-h", "dhp-redis-1", "ping"]
+      interval: 30s
+      retries: 3
+      start_period: 10s
+      timeout: 10s
+
+  # Kafka Instances
+  dhp-kafka1:
+    build:
+      context: .
+      dockerfile: Dockerfile.kafka
+    container_name: dhp-kafka1
+    hostname: dhp-kafka1
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT'
+      KAFKA_LISTENERS: 'INTERNAL://dhp-kafka1:29092,CONTROLLER://dhp-kafka1:29093,EXTERNAL://0.0.0.0:9092'
+      KAFKA_ADVERTISED_LISTENERS: 'INTERNAL://dhp-kafka1:29092,EXTERNAL://localhost:9092'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'INTERNAL'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@dhp-kafka1:29093,2@dhp-kafka2:29093,3@dhp-kafka3:29093'
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+      KAFKA_LOG_DIRS: '/var/lib/kafka/logs'
+      CLUSTER_ID: 'QwHN4EyJQaG8jwdSQo_3rg=='
+    volumes:
+      - dhp-kafka1-data:/var/lib/kafka/data
+      - dhp-kafka1-logs:/var/lib/kafka/logs
+    networks:
+      - dhp-network
+    healthcheck:
+      test: ["CMD", "nc", "-zv", "localhost", "9092"]
+      interval: 30s
+      retries: 3
+      start_period: 10s
+      timeout: 10s
+
+  dhp-kafka2:
+    build:
+      context: .
+      dockerfile: Dockerfile.kafka
+    container_name: dhp-kafka2
+    hostname: dhp-kafka2
+    ports:
+      - "9093:9093"
+    environment:
+      KAFKA_NODE_ID: 2
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT'
+      KAFKA_LISTENERS: 'INTERNAL://dhp-kafka2:29092,CONTROLLER://dhp-kafka2:29093,EXTERNAL://0.0.0.0:9093'
+      KAFKA_ADVERTISED_LISTENERS: 'INTERNAL://dhp-kafka2:29092,EXTERNAL://localhost:9093'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'INTERNAL'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@dhp-kafka1:29093,2@dhp-kafka2:29093,3@dhp-kafka3:29093'
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+      KAFKA_LOG_DIRS: '/var/lib/kafka/logs'
+      CLUSTER_ID: 'QwHN4EyJQaG8jwdSQo_3rg=='
+    volumes:
+      - dhp-kafka2-data:/var/lib/kafka/data
+      - dhp-kafka2-logs:/var/lib/kafka/logs
+    networks:
+      - dhp-network
+    healthcheck:
+      test: ["CMD", "nc", "-zv", "localhost", "9093"]
+      interval: 30s
+      retries: 3
+      start_period: 10s
+      timeout: 10s
+
+  dhp-kafka3:
+    build:
+      context: .
+      dockerfile: Dockerfile.kafka
+    container_name: dhp-kafka3
+    hostname: dhp-kafka3
+    ports:
+      - "9094:9094"
+    environment:
+      KAFKA_NODE_ID: 3
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT'
+      KAFKA_LISTENERS: 'INTERNAL://dhp-kafka3:29092,CONTROLLER://dhp-kafka3:29093,EXTERNAL://0.0.0.0:9094'
+      KAFKA_ADVERTISED_LISTENERS: 'INTERNAL://dhp-kafka3:29092,EXTERNAL://localhost:9094'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'INTERNAL'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@dhp-kafka1:29093,2@dhp-kafka2:29093,3@dhp-kafka3:29093'
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+      KAFKA_LOG_DIRS: '/var/lib/kafka/logs'
+      CLUSTER_ID: 'QwHN4EyJQaG8jwdSQo_3rg=='
+    volumes:
+      - dhp-kafka3-data:/var/lib/kafka/data
+      - dhp-kafka3-logs:/var/lib/kafka/logs
+    networks:
+      - dhp-network
+    healthcheck:
+      test: ["CMD", "nc", "-zv", "localhost", "9094"]
+      interval: 30s
+      retries: 3
+      start_period: 10s
+      timeout: 10s
+
+  # HAProxy for load balancing
+  dhp-haproxy:
+    image: haproxy:latest
+    container_name: dhp-haproxy
+    ports:
+      - "8080:8080"
+      - "8404:8404"
+      - "1936:1936"
+    volumes:
+      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
+      - ./wait-for-it.sh:/usr/local/bin/wait-for-it.sh # Mount wait-for-it.sh script
+    depends_on:
+      - dhp-redis-1
+      - dhp-redis-2
+      - dhp-kafka1
+      - dhp-kafka2
+      - dhp-kafka3
+      - dhp-postgres-master
+      - dhp-postgres-node1
+      - dhp-postgres-node2
+    networks:
+      - dhp-network
+    command: ["haproxy", "-f", "/usr/local/etc/haproxy/haproxy.cfg"]
+
+  dhp-redis-exporter-master:
+    image: oliver006/redis_exporter:v1.66.0
+    container_name: dhp-redis-exporter-master
+    ports:
+      - "9121:9121"
+    networks:
+      - dhp-network
+    environment:
+      REDIS_ADDR: redis://dhp-redis-1:6379  # Connect to Redis instance
+
+  dhp-node-exporter:
+    image: prom/node-exporter:latest
+    container_name: dhp-node-exporter
+    restart: unless-stopped
+    expose:
+      - 9100
+    networks:
+      - dhp-network
+
+  dhp-cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: dhp-cadvisor
+    restart: unless-stopped
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    expose:
+      - 8080
+    networks:
+      - dhp-network
+
+volumes:
+  dhp-redis-data-1:
+    driver: local
+  dhp-redis-data-2:
+    driver: local
+  dhp-kafka1-data:
+    driver: local
+  dhp-kafka1-logs:
+    driver: local
+  dhp-kafka2-data:
+    driver: local
+  dhp-kafka2-logs:
+    driver: local
+  dhp-kafka3-data:
+    driver: local
+  dhp-kafka3-logs:
+    driver: local
+  dhp-postgres-master-data:
+    driver: local
+  dhp-postgres-node1-data:
+    driver: local
+  dhp-postgres-node2-data:
+    driver: local
+  dhp-prometheus-data:
+    driver: local
+  dhp-grafana-data:
+    driver: local
+  dhp-pgadmin-data:
+    driver: local
+  dhp-cadvisor-data:  # Placeholder for persistent cadvisor data if needed
+    driver: local
 
 networks:
   dhp-network:
-    driver: bridge  # Default network driver for inter-container communication
-
+    driver: bridge

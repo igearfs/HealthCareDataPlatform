@@ -1,0 +1,11 @@
+# Start from the official HAProxy image
+FROM haproxy:latest
+
+# Switch to root to install netcat
+USER root
+
+# Install netcat-openbsd and clean up
+RUN apt-get update && apt-get install -y netcat-openbsd && apt-get clean
+
+# Optionally, switch back to the non-root user (if necessary)
+USER haproxy
