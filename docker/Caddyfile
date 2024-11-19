@@ -1,0 +1,14 @@
+localhost {
+    reverse_proxy dhp-grafana:3000
+    # You can disable SSL here as we're using localhost
+}
+
+localhost/prometheus {
+    reverse_proxy dhp-prometheus:9090
+    # You can disable SSL here as we're using localhost
+}
+
+localhost/pgadmin {
+    reverse_proxy dhp-pgadmin:80  # Proxy to pgAdmin
+    # SSL can be skipped for localhost or you can enable for external access
+}

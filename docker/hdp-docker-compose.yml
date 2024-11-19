@@ -1,0 +1,99 @@
+services:
+  # PostgreSQL Master Node with Citus
+  dhp-postgres-master:
+    image: citusdata/citus:postgres_15
+    container_name: dhp-postgres-master
+    environment:
+      POSTGRES_PASSWORD: dhp-secret-password
+      POSTGRES_USER: dhp-postgres
+    networks:
+      - dhp-network
+    expose:
+      - "5432"  # Expose to internal services (like Prometheus)
+
+  # PostgreSQL Worker Node 1 with Citus
+  dhp-postgres-node1:
+    image: citusdata/citus:postgres_15
+    container_name: dhp-postgres-node1
+    environment:
+      POSTGRES_PASSWORD: dhp-secret-password
+      POSTGRES_USER: dhp-postgres
+    networks:
+      - dhp-network
+    expose:
+      - "5432"
+    depends_on:
+      - dhp-postgres-master
+
+  # PostgreSQL Worker Node 2 with Citus
+  dhp-postgres-node2:
+    image: citusdata/citus:postgres_15
+    container_name: dhp-postgres-node2
+    environment:
+      POSTGRES_PASSWORD: dhp-secret-password
+      POSTGRES_USER: dhp-postgres
+    networks:
+      - dhp-network
+    expose:
+      - "5432"
+    depends_on:
+      - dhp-postgres-master
+
+  # Prometheus for monitoring PostgreSQL
+  dhp-prometheus:
+    image: prom/prometheus:latest
+    container_name: dhp-prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml  # Mount Prometheus config file
+    networks:
+      - dhp-network
+    ports:
+      - "9090:9090"  # Expose Prometheus UI on port 9090
+    depends_on:
+      - dhp-postgres-master
+      - dhp-postgres-node1
+      - dhp-postgres-node2
+      - dhp-postgres-exporter
+
+  # Grafana for visualizing metrics from Prometheus
+  dhp-grafana:
+    image: grafana/grafana:latest
+    container_name: dhp-grafana
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin  # Set Grafana admin password
+    networks:
+      - dhp-network
+    ports:
+      - "3000:3000"  # Expose Grafana UI on port 3000
+    depends_on:
+      - dhp-prometheus
+
+  # pgAdmin for PostgreSQL web management UI
+  dhp-pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: dhp-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com  # Set pgAdmin default email
+      PGADMIN_DEFAULT_PASSWORD: admin  # Set pgAdmin default password
+    networks:
+      - dhp-network
+    ports:
+      - "5050:80"  # Expose pgAdmin UI on port 5050
+    depends_on:
+      - dhp-postgres-master
+
+  # PostgreSQL Exporter for Prometheus (to scrape metrics)
+  dhp-postgres-exporter:
+    image: wrouesnel/postgres_exporter
+    container_name: dhp-postgres-exporter
+    environment:
+      DATA_SOURCE_NAME: "postgresql://dhp-postgres:dhp-secret-password@dhp-postgres-master:5432/postgres?sslmode=disable"
+    networks:
+      - dhp-network
+    expose:
+      - "9187"  # Expose metrics endpoint for Prometheus
+
+networks:
+  dhp-network:
+    driver: bridge  # Default network driver for inter-container communication
+
