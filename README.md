@@ -10,7 +10,8 @@ This setup is **experimental** and provided for testing and learning purposes on
 
 **You have been warned. Use at your own risk.**
 
-
+I can't wait to get to the AI part... I have so many ideas and I am sure the more I do and learn more will come
+From disease detection to ... oh I am going to leave some goodies for you to not know...
 
 # Healthcare Data Platform
 Sponsored by: In-Game Event, A Red Flag Syndicate LLC
