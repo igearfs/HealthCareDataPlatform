@@ -55,7 +55,7 @@ This project supports a variety of patient-level data pipelines across healthcar
 - **Wearable and Sensor Data Pipelines**: Process patient health metrics like activity, sleep, and vitals.
 - **Home Monitoring Pipelines**: Enable real-time data collection for chronic disease management (e.g., COPD, hypertension).
 
-
+and anything else that pops up... 
 ---
 
 ## End Goal
