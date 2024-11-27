@@ -23,6 +23,38 @@ Sponsored by: In-Game Event, A Red Flag Syndicate LLC
   - Opting out would remove data from the central system.
 - Data requests could be approved live within the app, eliminating the constant need to opt out.  
   **It's time to disrupt the healthcare industry.**
+- **Data Pipelines for all forms of data inbound. HL7, CCD, Fhir, Genetics, Labs, X12, etc...**
+
+
+# Pipelines we would like to include starting with HL7, X12 more data more the docs can see the big picture on a patient.
+
+This project supports a variety of patient-level data pipelines across healthcare and dental domains. Below is a breakdown of supported pipelines:
+
+## General Healthcare Pipelines
+- **Electronic Health Record (EHR) Pipelines**: Capture patient demographics, medical history, diagnoses, medications, and treatment plans.
+- **Imaging Data Pipelines**: Process and store patient imaging data such as X-rays, MRIs, and CT scans using systems like PACS.
+- **Laboratory Information Systems (LIS) Pipelines**: Handle patient-specific lab orders, results, and analyses (e.g., blood tests, biopsies).
+- **Pharmacy Data Pipelines**: Track prescriptions, medication adherence, and patient-specific pharmacy records.
+- **Remote Patient Monitoring (RPM) Pipelines**: Collect real-time patient data from wearable devices and sensors, such as heart rate and glucose levels.
+- **Telehealth Data Pipelines**: Transmit patient data from virtual consultations, including clinical notes and vitals.
+- **Genomics and Bioinformatics Pipelines**: Process patient-specific genetic data for personalized medicine and sequencing analyses.
+- **Clinical Trial Data Pipelines**: Manage participant-level data from trials, including interventions and outcomes.
+- **AI-Assisted Diagnostics Pipelines**: Use patient imaging or clinical data for anomaly detection and predictive modeling.
+
+## Dental-Specific Pipelines
+- **Dental EHR Pipelines**: Store patient dental histories, including X-rays, procedures, and care plans.
+- **Imaging and Diagnostic Pipelines**: Handle patient-specific dental imaging, such as intraoral scans and CBCT.
+- **Practice Management Pipelines**: Manage individual patient appointments, treatment plans, and payment history.
+- **Oral Health Monitoring Pipelines**: Collect data from IoT devices like smart toothbrushes or home-based oral health tools.
+- **3D Printing and Prosthetic Design Pipelines**: Process patient imaging data to create custom dental prosthetics, crowns, or aligners.
+
+## Cross-Specialty and Advanced Pipelines
+- **Dental-Medical Integration Pipelines**: Share patient-specific oral health data with medical providers for holistic care.
+- **AI and Machine Learning Pipelines**: Analyze patient data for predictions, recommendations, or risk alerts.
+- **Natural Language Processing (NLP) Pipelines**: Extract structured patient data from unstructured clinical notes or reports.
+- **Wearable and Sensor Data Pipelines**: Process patient health metrics like activity, sleep, and vitals.
+- **Home Monitoring Pipelines**: Enable real-time data collection for chronic disease management (e.g., COPD, hypertension).
+
 
 ---
 
@@ -91,6 +123,9 @@ We aim to identify harmful chemicals in food and their impact on long-term healt
   - Full transparency on data sharing.
   - Users will receive notifications for new data sharing opportunities (e.g., insurance company onboarding).
   - Always opt-in, never automatic.
+- **Doctor rating and Review Section:**
+  - Patients can rate the doctor/dentist/healthcare provider
+
 
 ### **Tools & Technologies**
 - **Containerization:** Docker Compose/Kubernetes
