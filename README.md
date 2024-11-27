@@ -24,6 +24,7 @@ Sponsored by: In-Game Event, A Red Flag Syndicate LLC
 - Data requests could be approved live within the app, eliminating the constant need to opt out.  
   **It's time to disrupt the healthcare industry.**
 - **Data Pipelines for all forms of data inbound. HL7, CCD, Fhir, Genetics, Labs, X12, etc...**
+- Data analytics to watch over the persons health and potentially the world's health. 
 
 
 # Pipelines we would like to include starting with HL7, X12 more data more the docs can see the big picture on a patient.
